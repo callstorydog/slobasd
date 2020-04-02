@@ -1,0 +1,17 @@
+{
+    "config": {
+        "s3": {
+            "recordsBucketName": "calls-record-bucket-dev",
+            "transcriptedRecordsBucketName": "transcripted-records-bucket-dev",
+            "recordImagesBucketName": "record-images-bucket-dev"
+        },
+        "cognito": {
+            "userPoolId": "us-east-1_sj1lrpMkn",
+            "tokenAud": "72scs224ie4gabmn38denrelri"
+        },
+        "twilio": {
+            "accountSid": "AC28e8f4eaa87466fb11614603749ccacb",
+            "token": "2b92bdef2d8a3731baf14b8e5f204eb1"
+        }
+    }
+}

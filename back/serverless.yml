@@ -1,0 +1,210 @@
+service: calls-record-project-back 
+
+custom:
+  logRetentionInDays: 30
+  webpack:
+    webpackConfig: 'webpack.config.js'
+    packager: 'npm'
+    includeModules:
+      forceExclude:
+        - aws-sdk
+  config: ${file(./serverless-config-${self:provider.stage}.json):config}
+
+provider:
+  name: aws
+  runtime: nodejs10.x
+  stage: ${opt:stage, 'dev'}
+  region: us-east-1
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "cognito-idp:*"
+        - "cognito-identity:*"
+        - "dynamodb:*"
+        - "lambda:InvokeFunction"
+        - "events:*"
+        - "apigateway:*"
+        - "s3:*"
+        - "transcribe:*"
+      Resource: "*"
+  environment:
+    STAGE: ${opt:stage, 'dev'}
+    USER_POOl_ID: ${self:custom.config.cognito.userPoolId, ''}
+    TOKEN_AUD: ${self:custom.config.cognito.tokenAud, ''}
+    TWILIO_ACCOUNT_SID: ${self:custom.config.twilio.accountSid, ''
+    TWILIO_AUTH_TOKEN: ${self:custom.config.twilio.token, ''}
+    RECORDS_S3_BUCKET_NAME: ${self:custom.config.s3.recordsBucketName, ''}
+    TRANSCRIPTED_RECORDS_S3_BUCKET_NAME: ${self:custom.config.s3.transcriptedRecordsBucketName, ''}
+    RECORD_IMAGES_S3_BUCKET_NAME: ${self:custom.config.s3.recordImagesBucketName, ''}
+functions:
+  recordsRouter:
+    handler: src/index.recordsRouter
+    timeout: 30
+    memorySize: 128
+    events:
+      - http:
+          path: /records/{route+}
+          method: any
+          cors: true # <-- CORS!
+  accountsRouter:
+    handler: src/index.accountsRouter
+    timeout: 30
+    memorySize: 128
+    events:
+      - http:
+          path: /accounts/{route+}
+          method: any
+          cors: true # <-- CORS!
+  incomeCallWebhook:
+    handler: src/index.twilioRouter
+    timeout: 30
+    memorySize: 128
+    events:
+      - http:
+          path: /twilio/start-recording
+          method: any
+          cors: true # <-- CORS!
+  recordingCallback:
+    handler: src/index.twilioRouter
+    timeout: 30
+    memorySize: 128
+    events:
+      - http:
+          path: /twilio/recording-callback
+          method: any
+          cors: true # <-- CORS!
+  onRecordUploadedToS3:
+    handler: src/index.onRecordUploadedToS3Handler
+    timeout: 30
+    memorySize: 128
+    events:
+      - s3:
+          bucket: ${self:custom.config.s3.recordsBucketName, ''}
+          event: s3:ObjectCreated:*
+          existing: true
+  onTranscribeJobResultUploadedToS3:
+    handler: src/index.onTranscribeJobResultUploadedToS3Handler
+    timeout: 30
+    memorySize: 128
+    events:
+      - s3:
+          bucket: ${self:custom.config.s3.transcriptedRecordsBucketName, ''}
+          event: s3:ObjectCreated:*
+          existing: true
+resources:
+  Resources:
+    RecordsS3Bucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.config.s3.recordsBucketName, ''}
+    RecordImagesS3Bucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.config.s3.recordImagesBucketName, ''}
+    TranscodedRecordsS3Bucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.config.s3.transcriptedRecordsBucketName, ''}
+    CognitoSMSRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument: 
+          Version: "2012-10-17"
+          Statement: 
+            - Effect: "Allow"
+              Principal: 
+                Service: 
+                  - "cognito-idp.amazonaws.com"
+              Action: 
+                - "sts:AssumeRole"
+              Condition:
+                StringEquals:
+                  "sts:ExternalId": 'b95e7bf2-218f-11ea-978f-2e728ce88125'
+        Path: "/"
+        Policies:
+          - PolicyName: String
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement: 
+                - Effect: "Allow"
+                  Action: 
+                    - "sns:publish"
+                  Resource: 
+                    - "*"
+    CognitoUserPool:
+      Type: AWS::Cognito::UserPool
+      Properties: 
+        UsernameAttributes:
+          - phone_number
+        AdminCreateUserConfig: 
+          AllowAdminCreateUserOnly: false
+        AutoVerifiedAttributes:
+          - phone_number
+        Schema: 
+          - Name: phone_number
+            Mutable: true
+          - Name: name
+            Mutable: true
+          - Name: sec_phone_number
+            Mutable: true
+            AttributeDataType: String
+            DeveloperOnlyAttribute: false
+            Required: false
+        UserPoolName: calls-record-${self:provider.stage}
+        SmsConfiguration:
+          ExternalId: b95e7bf2-218f-11ea-978f-2e728ce88125
+          SnsCallerArn: !GetAtt CognitoSMSRole.Arn
+        Policies:
+          PasswordPolicy: 
+            MinimumLength: 6
+            RequireLowercase: false
+            RequireNumbers: true
+            RequireSymbols: false
+            RequireUppercase: false
+    CognitoUserPoolClientDashboard:
+      Type: AWS::Cognito::UserPoolClient
+      Properties: 
+        ClientName:  calls-record-dashboard-client
+        RefreshTokenValidity: 365
+        UserPoolId: !Ref CognitoUserPool
+    CognitoUserPoolAdminGroup:
+      Type: AWS::Cognito::UserPoolGroup
+      Properties: 
+        Description: Super Admin. Full access.
+        GroupName: super-admin
+        UserPoolId: !Ref CognitoUserPool
+    CognitoUserPoolUserGroup:
+      Type: AWS::Cognito::UserPoolGroup
+      Properties: 
+        Description: User. Read-only access.
+        GroupName: user
+        UserPoolId: !Ref CognitoUserPool
+    RecordsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: call-records-table-${self:provider.stage}
+        AttributeDefinitions:
+          - AttributeName: 'id'
+            AttributeType: S
+          - AttributeName: 'phoneNumber'
+            AttributeType: S
+          - AttributeName: 'recordingStatus'
+            AttributeType: S
+        BillingMode: PAY_PER_REQUEST
+        KeySchema:
+          - AttributeName: 'id'
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: 'phoneNumber'
+            KeySchema:
+              - AttributeName: 'phoneNumber'
+                KeyType: HASH
+              - AttributeName: 'recordingStatus'
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+      
+plugins:
+  - serverless-webpack
+  - serverless-offline
+  - serverless-plugin-log-retention

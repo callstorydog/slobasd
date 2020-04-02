@@ -1,0 +1,44 @@
+{
+  "name": "calls-record-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "format": "prettier --write  'src/**/*.ts' 'test/**/*.ts'"
+  },
+  "dependencies": {
+    "alagarr": "^1.0.0-32",
+    "aws-sdk": "^2.504.0",
+    "cognito-jwt-token-validator": "^1.0.0",
+    "got": "^10.0.4",
+    "hash.js": "^1.1.7",
+    "lodash": "^4.17.14",
+    "twilio": "^3.39.0",
+    "uuid": "^3.4.0"
+  },
+  "devDependencies": {
+    "@babel/preset-env": "^7.6.0",
+    "@babel/preset-typescript": "^7.6.0",
+    "@types/aws-lambda": "^8.10.27",
+    "@types/got": "^9.6.9",
+    "@types/jest": "^24.0.16",
+    "@types/lodash": "^4.14.136",
+    "@types/uuid": "^3.4.6",
+    "babel-loader": "^8.0.6",
+    "cache-loader": "^4.1.0",
+    "fork-ts-checker-webpack-plugin": "^1.5.0",
+    "jest": "^24.8.0",
+    "prettier": "^1.18.2",
+    "serverless-offline": "^5.6.0",
+    "serverless-plugin-log-retention": "^2.0.0",
+    "serverless-plugin-typescript": "^1.1.7",
+    "serverless-webpack": "^5.3.1",
+    "ts-jest": "^24.0.2",
+    "ts-loader": "^6.0.4",
+    "typescript": "^3.5.2",
+    "webpack": "^4.39.3",
+    "webpack-node-externals": "^1.7.2"
+  },
+  "author": "",
+  "license": "ISC"
+}
