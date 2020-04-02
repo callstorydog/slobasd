@@ -16,7 +16,7 @@ import CloseIcon from "@material-ui/icons/Close";
 import Typography from "@material-ui/core/Typography";
 import { GridList, Zoom, GridListTile } from "@material-ui/core";
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
-import {faCaretLeft, faCaretRight} from '@fortawesome/free-solid-svg-icons';
+import { faCaretLeft, faCaretRight } from '@fortawesome/free-solid-svg-icons';
 
 const styles = (theme: Theme) =>
   createStyles({
