@@ -10,6 +10,9 @@ import TableContainer from "@material-ui/core/TableContainer";
 import TableHead from "@material-ui/core/TableHead";
 import TablePagination from "@material-ui/core/TablePagination";
 import TableRow from "@material-ui/core/TableRow";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEdit, faHeadphonesAlt, faSearch, faImage } from '@fortawesome/free-solid-svg-icons';
+import { faTrashAlt } from '@fortawesome/free-regular-svg-icons';
 
 import { Data, Column } from "@models/Table";
 
@@ -37,6 +40,11 @@ import * as config from "@config";
 import RecordView from "./view";
 import RecordListen from "./listen";
 import RecordEdit from "./edit";
+import Dialog from '@material-ui/core/Dialog';
+import DialogActions from '@material-ui/core/DialogActions';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogContentText from '@material-ui/core/DialogContentText';
+import DialogTitle from '@material-ui/core/DialogTitle';
 
 const columns = (props: any, classes: any, openViewDialog: any) =>
   [
@@ -53,7 +61,7 @@ const columns = (props: any, classes: any, openViewDialog: any) =>
       format: (row: any, value: number) =>
         !!value
           ? new Date(value).toLocaleString("en-US", {
-              timeZone: "America/New_York"
+              timeZone: "America/New_York", year: 'numeric', month: 'numeric', day: 'numeric'
             })
           : "",
       align: "center",
@@ -62,7 +70,7 @@ const columns = (props: any, classes: any, openViewDialog: any) =>
     {
       id: "messageText",
       label: "Story",
-      format: (row: any, value: String) => (!!value ? value.slice(0, 50) : ""),
+      format: (row: any, value: String) => (!!value ? value.slice(0, 50) + " more ..." : ""),
       align: "center",
       onClick: openViewDialog,
       width: "25%"
@@ -89,70 +97,6 @@ const columns = (props: any, classes: any, openViewDialog: any) =>
             ))
           : "",
       width: 100,
-      align: "center"
-    },
-    {
-      id: "attachedImage",
-      label: "Images",
-      format: (row: any, value: string) =>
-        !!value ? (
-          <p key={`attachedImage-${row.id}`}>
-            <input
-              onChange={e => {
-                if (!!e.target.files) {
-                  const reader = new FileReader();
-                  reader.readAsDataURL(e.target.files[0]);
-                  reader.onload = () => {
-                    props.dispatch(
-                      actions.updateRecordImage(
-                        row["id"],
-                        reader.result as string
-                      )
-                    );
-                  };
-                  e.target.value = null as any;
-                }
-              }}
-              accept="image/*"
-              className={classes.input}
-              id={`text-button-file-${row.id}`}
-              multiple
-              type="file"
-            />
-            <label htmlFor={`text-button-file-${row.id}`}>
-              <Button component="span">Upload</Button>
-            </label>
-          </p>
-        ) : (
-          <p key={`attachedImage-${row.id}`}>
-            <input
-              onChange={e => {
-                if (!!e.target.files) {
-                  const reader = new FileReader();
-                  reader.readAsDataURL(e.target.files[0]);
-                  reader.onload = () => {
-                    props.dispatch(
-                      actions.updateRecordImage(
-                        row["id"],
-                        reader.result as string
-                      )
-                    );
-                  };
-                  e.target.value = null as any;
-                }
-              }}
-              accept="image/*"
-              className={classes.input}
-              id={`text-button-file-${row.id}`}
-              multiple
-              type="file"
-            />
-            <label htmlFor={`text-button-file-${row.id}`}>
-              <Button component="span">Upload</Button>
-            </label>
-          </p>
-        ),
-      width: 80,
       align: "center"
     }
   ] as Column[];
@@ -222,6 +166,7 @@ interface RecordsListComponentState {
   recordViewOpen?: boolean;
   recordListenOpen?: boolean;
   recordEditOpen?: boolean;
+  confirmationDialogOpen: boolean;
 }
 
 class RecordsListComponent extends React.Component<
@@ -233,7 +178,8 @@ class RecordsListComponent extends React.Component<
     rowsPerPage: 10,
     recordViewOpen: false,
     recordListenOpen: false,
-    recordEditOpen: false
+    recordEditOpen: false,
+    confirmationDialogOpen: false,
   } as RecordsListComponentState;
 
   async componentDidMount() {
@@ -305,6 +251,44 @@ class RecordsListComponent extends React.Component<
       activeRecord: row
     } as any);
   }
+
+    openConfirmationDialog(row: any) {
+      this.setState({
+        confirmationDialogOpen: true,
+        activeRecord: row
+      });
+    }
+
+    closeConfirmationDialog() {
+      this.setState({
+        confirmationDialogOpen: false
+      });
+    }
+
+    deleteRow(row: any) {
+      this.props.dispatch(
+        actions.deleteRecord(row)
+      );
+      this.closeConfirmationDialog();
+    }
+
+    showPrevious() {
+      let index = this.props.records.findIndex(record => record === this.state.activeRecord);
+      // If we are on the first record should not go to previous
+      if(index > 0) {
+        let prevRecord = this.props.records[index - 1];
+        this.setState({activeRecord: prevRecord});
+      }
+    }
+
+    showNext() {
+      let index = this.props.records.findIndex(record => record === this.state.activeRecord);
+      // If the record is not found index will be -1 and if we are on the last record should not go to next
+      if(index !== -1 && index < this.props.records.length - 1) {
+        let prevRecord = this.props.records[index + 1];
+        this.setState({activeRecord: prevRecord});
+      }
+    }
 
   render() {
     const {
@@ -413,55 +397,116 @@ class RecordsListComponent extends React.Component<
                                 })}
                                 <TableCell key={"actions"} align={"center"}>
                                   <p>
-                                    <Button
-                                      color="primary"
-                                      onClick={() =>
-                                        this.setState({
-                                          recordEditOpen: true,
-                                          activeRecord: row
-                                        } as any)
-                                      }
-                                    >
-                                      Edit
-                                    </Button>
-                                    <Button
-                                      color="secondary"
-                                      onClick={() =>
-                                        this.props.dispatch(
-                                          actions.deleteRecord(row)
-                                        )
-                                      }
-                                    >
-                                      Delete
-                                    </Button>
+                                      <FontAwesomeIcon
+                                          icon={faEdit}
+                                          onClick={() =>
+                                              this.setState({
+                                                  recordEditOpen: true,
+                                                  activeRecord: row
+                                              } as any)
+                                          }
+                                          size="lg"
+                                          style={{
+                                              cursor: 'pointer',
+                                              padding: '5px'
+                                          }}
+                                      />
+                                      <FontAwesomeIcon
+                                           icon={faTrashAlt}
+                                           onClick={() => this.openConfirmationDialog(row)}
+                                           size="lg"
+                                           style={{
+                                               cursor: 'pointer',
+                                               padding: '5px'
+                                           }}
+                                      />
                                   </p>
+                                    <Dialog
+                                        open={this.state.confirmationDialogOpen && row === this.state.activeRecord}
+                                        onClose={() => this.closeConfirmationDialog()}
+                                        aria-labelledby="alert-dialog-title"
+                                        aria-describedby="alert-dialog-description"
+                                    >
+                                        <DialogTitle id="alert-dialog-title">{"Delete confirmation"}</DialogTitle>
+                                        <DialogContent>
+                                            <DialogContentText id="alert-dialog-description">
+                                                Are you sure you want to delete this story?
+                                            </DialogContentText>
+                                        </DialogContent>
+                                        <DialogActions>
+                                            <Button onClick={() => this.closeConfirmationDialog()} color="primary" autoFocus>NO</Button>
+                                            <Button onClick={() => this.deleteRow(row)} color="primary">YES</Button>
+                                        </DialogActions>
+                                    </Dialog>
                                   <p>
-                                    <Button
-                                      onClick={() =>
-                                        this.setState({
-                                          recordViewOpen: true,
-                                          activeRecord: row
-                                        } as any)
-                                      }
-                                    >
-                                      View
-                                    </Button>{" "}
-                                    <Button
-                                      onClick={() => {
-                                        this.props.dispatch(
-                                          actions.getRecordAudioUrl(
-                                            row.id,
-                                            row.phoneNumber
-                                          )
-                                        );
-                                        this.setState({
-                                          recordListenOpen: true,
-                                          activeRecord: row
-                                        } as any);
-                                      }}
-                                    >
-                                      Listen
-                                    </Button>
+                                      <FontAwesomeIcon
+                                           icon={faSearch}
+                                           onClick={() =>
+                                               this.setState({
+                                                   recordViewOpen: true,
+                                                   activeRecord: row
+                                               } as any)
+                                           }
+                                           size="lg"
+                                           style={{
+                                               cursor: 'pointer',
+                                               padding: '5px'
+                                           }}
+                                      />
+                                      <FontAwesomeIcon
+                                           icon={faHeadphonesAlt}
+                                           onClick={() => {
+                                               this.props.dispatch(
+                                                   actions.getRecordAudioUrl(
+                                                       row.id,
+                                                       row.phoneNumber
+                                                   )
+                                               );
+                                               this.setState({
+                                                   recordListenOpen: true,
+                                                   activeRecord: row
+                                               } as any);
+                                           }}
+                                           size="lg"
+                                           style={{
+                                               cursor: 'pointer',
+                                               padding: '5px'
+                                           }}
+                                      />
+                                  </p>
+                                  <p key={`attachedImage-${row.id}`}>
+                                      <input
+                                          onChange={e => {
+                                              if (!!e.target.files) {
+                                                  const reader = new FileReader();
+                                                  reader.readAsDataURL(e.target.files[0]);
+                                                  reader.onload = () => {
+                                                      this.props.dispatch(
+                                                          actions.updateRecordImage(
+                                                              row["id"],
+                                                              reader.result as string
+                                                          )
+                                                      );
+                                                  };
+                                                  e.target.value = null as any;
+                                              }
+                                          }}
+                                          accept="image/*"
+                                          className={classes.input}
+                                          id={`text-button-file-${row.id}`}
+                                          multiple
+                                          type="file"
+                                      />
+                                  <label htmlFor={`text-button-file-${row.id}`}>
+                                      <FontAwesomeIcon
+                                           icon={faImage}
+                                           size="lg"
+                                           style={{
+                                               cursor: 'pointer',
+                                               padding: '5px'
+                                           }}
+                                      />
+                                  </label>
                                   </p>
                                 </TableCell>
                               </TableRow>
@@ -494,6 +539,8 @@ class RecordsListComponent extends React.Component<
         <RecordView
           open={this.state.recordViewOpen}
           onClosed={() => this.setState({ recordViewOpen: false })}
+          showPrevious={() => this.showPrevious()}
+          showNext={() => this.showNext()}
           id={!!this.state.activeRecord ? this.state.activeRecord.id : ""}
           text={
             !!this.state.activeRecord ? this.state.activeRecord.messageText : ""

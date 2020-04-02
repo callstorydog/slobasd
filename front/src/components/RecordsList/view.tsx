@@ -15,6 +15,8 @@ import IconButton from "@material-ui/core/IconButton";
 import CloseIcon from "@material-ui/icons/Close";
 import Typography from "@material-ui/core/Typography";
 import { GridList, Zoom, GridListTile } from "@material-ui/core";
+import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
+import {faCaretLeft, faCaretRight} from '@fortawesome/free-solid-svg-icons';
 
 const styles = (theme: Theme) =>
   createStyles({
@@ -142,6 +144,27 @@ export default withStyles(styles)((props: any) => {
           )}
         </DialogContent>
         <DialogActions>
+            <FontAwesomeIcon
+                 icon={faCaretLeft}
+                 onClick={props.showPrevious}
+                 size="lg"
+                 style={{
+                     position: 'absolute',
+                     cursor: 'pointer',
+                     left: '20px'
+                 }}
+
+            />
+            <FontAwesomeIcon
+                 icon={faCaretRight}
+                 onClick={props.showNext}
+                 size="lg"
+                 style={{
+                     position: 'absolute',
+                     cursor: 'pointer',
+                     left: '30px'
+                 }}
+            />
           <Button autoFocus onClick={props.onClosed} color="primary">
             Close
           </Button>
