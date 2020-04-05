@@ -56,48 +56,11 @@ const columns = (props: any, classes: any, openViewDialog: any) =>
     width: 300
   },*/
     {
-      id: "createdAt",
-      label: "Date",
-      format: (row: any, value: number) =>
-        !!value
-          ? new Date(value).toLocaleString("en-US", {
-              timeZone: "America/New_York", year: 'numeric', month: 'numeric', day: 'numeric'
-            })
-          : "",
-      align: "center",
-      width: 230
-    },
-    {
       id: "messageText",
-      label: "Story",
+      label: "My Stories",
       format: (row: any, value: String) => (!!value ? value.slice(0, 50) + " more ..." : ""),
       align: "center",
-      onClick: openViewDialog,
-      width: "25%"
-    },
-    {
-      id: "tags",
-      label: "Tags",
-      format: (row: any, value: string[]) =>
-        !!value
-          ? value.map((tag, i) => (
-              <div
-                key={`tag-${i}`}
-                style={{
-                  backgroundColor: "hsl(0,0%,90%)",
-                  borderRadius: 2,
-                  marginRight: 8,
-                  marginBottom: 8,
-                  display: "inline-block",
-                  padding: 5
-                }}
-              >
-                {tag}
-              </div>
-            ))
-          : "",
-      width: 100,
-      align: "center"
+      onClick: openViewDialog
     }
   ] as Column[];
 
@@ -307,7 +270,6 @@ class RecordsListComponent extends React.Component<
       >
         <Header />
         <Container maxWidth="xl" className={classes.fullWidthDevicesContainer}>
-          <h2>My Stories</h2>
           {((!!recordsLoadingProcess &&
             recordsLoadingProcess.status === ProcessStatus.RUNNING) ||
             (!!recordDeletingProcess &&
@@ -347,7 +309,7 @@ class RecordsListComponent extends React.Component<
                           <TableCell
                             key={"actions"}
                             align={"center"}
-                            style={{ width: "150px" }}
+                            style={{ width: "100px" }}
                           >
                             Actions
                           </TableCell>
@@ -408,7 +370,7 @@ class RecordsListComponent extends React.Component<
                                           size="lg"
                                           style={{
                                               cursor: 'pointer',
-                                              padding: '5px'
+                                              padding: '3px'
                                           }}
                                       />
                                       <FontAwesomeIcon
@@ -417,7 +379,7 @@ class RecordsListComponent extends React.Component<
                                            size="lg"
                                            style={{
                                                cursor: 'pointer',
-                                               padding: '5px'
+                                               padding: '3px'
                                            }}
                                       />
                                   </p>
@@ -450,7 +412,7 @@ class RecordsListComponent extends React.Component<
                                            size="lg"
                                            style={{
                                                cursor: 'pointer',
-                                               padding: '5px'
+                                               padding: '3px'
                                            }}
                                       />
                                       <FontAwesomeIcon
@@ -470,7 +432,7 @@ class RecordsListComponent extends React.Component<
                                            size="lg"
                                            style={{
                                                cursor: 'pointer',
-                                               padding: '5px'
+                                               padding: '3px'
                                            }}
                                       />
                                   </p>
@@ -503,7 +465,7 @@ class RecordsListComponent extends React.Component<
                                            size="lg"
                                            style={{
                                                cursor: 'pointer',
-                                               padding: '5px'
+                                               padding: '3px'
                                            }}
                                       />
                                   </label>
@@ -545,6 +507,7 @@ class RecordsListComponent extends React.Component<
           text={
             !!this.state.activeRecord ? this.state.activeRecord.messageText : ""
           }
+          date={!!this.state.activeRecord ?  this.state.activeRecord.createdAt : ""}
           attachedImages={
             !!this.state.activeRecord
               ? this.state.activeRecord.attachedImages

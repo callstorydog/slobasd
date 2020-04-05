@@ -18,8 +18,7 @@ const styles = {
   },
   headerPaperMobile: {
     display: "flex",
-    width: "100%",
-    flexDirection: "column-reverse" as any
+    width: "100%"
   },
   logoutButtonBlock: {
     paddingBottom: 10,
@@ -27,7 +26,8 @@ const styles = {
     display: "flex",
     justifyContent: "flex-end",
     alignItems: "center",
-    paddingRight: 15
+    paddingRight: 15,
+    width: "100%",
   }
 };
 
@@ -68,7 +68,7 @@ class Header extends React.Component<any, any> {
               alignItems: "center"
             }}
             item
-            sm={screenWidth > 650 ? 3 : 12}
+            sm={screenWidth > 650 ? 3 : 6}
           >
             <Link
               style={{
@@ -86,14 +86,14 @@ class Header extends React.Component<any, any> {
           <Grid item sm={screenWidth > 650 ? 7 : 12}></Grid>
           <Grid
             item
-            sm={screenWidth > 650 ? 2 : 12}
+            sm={screenWidth > 650 ? 2 : 6}
             className={classes.logoutButtonBlock}
           >
             <Button
               onClick={() => Auth.signOut()}
               variant="contained"
               color="secondary"
-              size={screenWidth > 800 || screenWidth < 650 ? "medium" : "small"}
+              size={screenWidth > 800 || screenWidth < 650 ? "small" : "small"}
               startIcon={<ExitToAppIcon />}
             >
               Logout

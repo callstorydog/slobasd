@@ -16,7 +16,8 @@ import CloseIcon from "@material-ui/icons/Close";
 import Typography from "@material-ui/core/Typography";
 import { GridList, Zoom, GridListTile } from "@material-ui/core";
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
-import { faCaretLeft, faCaretRight } from '@fortawesome/free-solid-svg-icons';
+import {faCaretLeft, faCaretRight} from '@fortawesome/free-solid-svg-icons';
+import './view.scss';
 
 const styles = (theme: Theme) =>
   createStyles({
@@ -31,7 +32,9 @@ const styles = (theme: Theme) =>
       color: theme.palette.grey[500]
     },
     wrapper: {
-      maxHeight: "85%"
+      maxHeight: "90%",
+      margin: "15px !important",
+      width: "90%"
     }
   });
 
@@ -86,6 +89,13 @@ export default withStyles(styles)((props: any) => {
       >
         <DialogTitle id="customized-dialog-title" onClose={undefined as any}>
           View Story
+            <div className="date-created">
+               {
+                  new Date(props.date).toLocaleString("en-US", {
+                     timeZone: "America/New_York", year: 'numeric', month: 'numeric', day: 'numeric'
+                  })
+               }
+            </div>
         </DialogTitle>
         <DialogContent dividers>
           {!!props.tags &&
@@ -147,7 +157,7 @@ export default withStyles(styles)((props: any) => {
             <FontAwesomeIcon
                  icon={faCaretLeft}
                  onClick={props.showPrevious}
-                 size="lg"
+                 size="3x"
                  style={{
                      position: 'absolute',
                      cursor: 'pointer',
@@ -158,11 +168,11 @@ export default withStyles(styles)((props: any) => {
             <FontAwesomeIcon
                  icon={faCaretRight}
                  onClick={props.showNext}
-                 size="lg"
+                 size="3x"
                  style={{
                      position: 'absolute',
                      cursor: 'pointer',
-                     left: '30px'
+                     left: '40px'
                  }}
             />
           <Button autoFocus onClick={props.onClosed} color="primary">
